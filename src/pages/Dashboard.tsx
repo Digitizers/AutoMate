@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp, DollarSign, Package, CheckCircle,
-  Clock, BarChart3, Wrench, CalendarDays,
+  Clock, BarChart3, Wrench, CalendarDays, TrendingDown,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine,
 } from "recharts";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -70,10 +70,6 @@ export default function Dashboard() {
     .filter(v => v.status !== "sold")
     .reduce((s, v) => s + (v.asking_price ?? 0), 0);
 
-  const soldRevenue = vehicles
-    .filter(v => v.status === "sold")
-    .reduce((s, v) => s + (v.asking_price ?? 0), 0);
-
   const avgPrice = total > 0
     ? Math.round(vehicles.reduce((s, v) => s + (v.asking_price ?? 0), 0) / total) : 0;
 
@@ -112,6 +108,43 @@ export default function Dashboard() {
   vehicles.forEach(v => { const m = v.manufacturer ?? "אחר"; mfgMap[m] = (mfgMap[m] ?? 0) + 1; });
   const mfgData = Object.entries(mfgMap).sort(([,a],[,b]) => b-a).slice(0,6).map(([name,count]) => ({ name, count }));
 
+  // ── Gross Profit helpers ──────────────────────────────────────────────
+  const calcProfit = (v: typeof vehicles[0]) => {
+    const revenue = v.asking_price ?? 0;
+    const cost    = (v.purchase_price ?? 0) + (v.expenses ?? 0) + (v.registration_fee ?? 0);
+    return revenue - cost;
+  };
+
+  const totalGrossProfit = vehicles
+    .filter(v => v.status === "sold")
+    .reduce((s, v) => s + calcProfit(v), 0);
+
+  // Monthly gross profit (sold vehicles, last 6 months)
+  const monthlyProfit = Array.from({ length: 6 }, (_, i) => {
+    const d   = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    const monthSold = vehicles.filter(v => {
+      const dt = new Date(v.updated_at ?? v.entry_date ?? v.created_at);
+      return v.status === "sold" && dt >= d && dt < end;
+    });
+    const profit = monthSold.reduce((s, v) => s + calcProfit(v), 0);
+    const count  = monthSold.length;
+    return { month: MONTH_NAMES[d.getMonth()], רווח: profit, כמות: count };
+  });
+
+  // Salesperson gross profit (sold vehicles only)
+  const salespersonMap: Record<string, { profit: number; count: number }> = {};
+  vehicles.filter(v => v.status === "sold" && v.salesperson).forEach(v => {
+    const sp = v.salesperson!;
+    if (!salespersonMap[sp]) salespersonMap[sp] = { profit: 0, count: 0 };
+    salespersonMap[sp].profit += calcProfit(v);
+    salespersonMap[sp].count  += 1;
+  });
+  const salespersonData = Object.entries(salespersonMap)
+    .sort(([,a],[,b]) => b.profit - a.profit)
+    .slice(0, 8)
+    .map(([name, d]) => ({ name, רווח: d.profit, כמות: d.count }));
+
   // ── Hero KPI cards ────────────────────────────────────────────────────
   const heroStats = [
     {
@@ -124,17 +157,21 @@ export default function Dashboard() {
       accent: true,
     },
     {
+      label: "רווח גולמי כולל",
+      value: totalGrossProfit >= 1_000_000
+        ? `₪${(totalGrossProfit / 1_000_000).toFixed(1)}M`
+        : totalGrossProfit >= 1_000
+        ? `₪${(totalGrossProfit / 1_000).toFixed(0)}K`
+        : `₪${totalGrossProfit.toLocaleString()}`,
+      sub: sold > 0 ? `ממוצע ₪${Math.round(totalGrossProfit / sold).toLocaleString()} לרכב` : "אין מכירות",
+      icon: TrendingUp,
+      accent: false,
+    },
+    {
       label: "רכבים שנכנסו החודש",
       value: thisMonthCount,
       sub: `${thisMonthSold} נמכרו החודש`,
       icon: CalendarDays,
-      accent: false,
-    },
-    {
-      label: "סה״כ נמכרו",
-      value: sold,
-      sub: soldRevenue > 0 ? `₪${(soldRevenue / 1_000_000).toFixed(1)}M הכנסות` : "אין נתונים",
-      icon: TrendingUp,
       accent: false,
     },
     {
@@ -357,6 +394,115 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* ── Gross Profit Charts ── */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Monthly gross profit */}
+              <div className="bg-card rounded-2xl border shadow-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-polin-medium text-foreground">רווח גולמי — 6 חודשים אחרונים</h3>
+                    <p className="text-xs font-polin-light text-muted-foreground mt-0.5">מחיר מכירה פחות עלות + הוצאות</p>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-polin-light text-muted-foreground">סה״כ</p>
+                    <p className="text-sm font-polin-medium text-accent">
+                      {totalGrossProfit >= 1_000_000
+                        ? `₪${(totalGrossProfit / 1_000_000).toFixed(1)}M`
+                        : `₪${(totalGrossProfit / 1_000).toFixed(0)}K`}
+                    </p>
+                  </div>
+                </div>
+                {monthlyProfit.some(m => m.כמות > 0) ? (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={monthlyProfit} barCategoryGap="40%" margin={{ top: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12, fontFamily: "Polin" }} axisLine={false} tickLine={false} />
+                      <YAxis
+                        tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : String(v)}
+                        tick={{ fontSize: 11, fontFamily: "Polin" }} axisLine={false} tickLine={false}
+                      />
+                      <Tooltip content={({ active, payload, label }: any) => {
+                        if (!active || !payload?.length) return null;
+                        const profit = payload[0]?.value as number ?? 0;
+                        const entry = monthlyProfit.find(m => m.month === label);
+                        return (
+                          <div className="rounded-xl border bg-card shadow-elevated p-3 text-right font-polin-light text-sm min-w-[150px]">
+                            <p className="font-polin-medium text-foreground mb-1">{label}</p>
+                            <p style={{ color: profit >= 0 ? "hsl(var(--accent))" : "hsl(0 72% 52%)" }}>
+                              רווח: ₪{profit.toLocaleString()}
+                            </p>
+                            <p className="text-muted-foreground">כמות: {entry?.כמות ?? 0} רכבים</p>
+                          </div>
+                        );
+                      }} />
+                      <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={2} />
+                      <Bar dataKey="רווח" radius={[6,6,0,0]}>
+                        {monthlyProfit.map((entry, i) => (
+                          <Cell key={i} fill={entry.רווח >= 0 ? "hsl(var(--accent))" : "hsl(0 72% 52%)"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[240px] flex flex-col items-center justify-center text-muted-foreground">
+                    <TrendingDown className="h-10 w-10 opacity-20 mb-2" />
+                    <p className="font-polin-light text-sm">אין מכירות בתקופה זו</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Salesperson gross profit */}
+              <div className="bg-card rounded-2xl border shadow-card p-6">
+                <div className="mb-4">
+                  <h3 className="font-polin-medium text-foreground">רווח גולמי לפי איש מכירות</h3>
+                  <p className="text-xs font-polin-light text-muted-foreground mt-0.5">רכבים שנמכרו בלבד</p>
+                </div>
+                {salespersonData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={salespersonData} layout="vertical" margin={{ right: 16, left: 4, top: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                      <XAxis
+                        type="number"
+                        tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : String(v)}
+                        tick={{ fontSize: 11, fontFamily: "Polin" }} axisLine={false} tickLine={false}
+                      />
+                      <YAxis
+                        type="category" dataKey="name"
+                        tick={{ fontSize: 11, fontFamily: "Polin" }}
+                        width={72} axisLine={false} tickLine={false}
+                      />
+                      <Tooltip content={({ active, payload }: any) => {
+                        if (!active || !payload?.length) return null;
+                        const profit = payload[0]?.value as number ?? 0;
+                        const entry = payload[0]?.payload;
+                        return (
+                          <div className="rounded-xl border bg-card shadow-elevated p-3 text-right font-polin-light text-sm min-w-[160px]">
+                            <p className="font-polin-medium text-foreground mb-1">{entry?.name}</p>
+                            <p style={{ color: "hsl(var(--accent))" }}>רווח: ₪{profit.toLocaleString()}</p>
+                            <p className="text-muted-foreground">מכירות: {entry?.כמות} רכבים</p>
+                            {entry?.כמות > 0 && (
+                              <p className="text-muted-foreground">ממוצע: ₪{Math.round(profit / entry.כמות).toLocaleString()}</p>
+                            )}
+                          </div>
+                        );
+                      }} />
+                      <ReferenceLine x={0} stroke="hsl(var(--border))" />
+                      <Bar dataKey="רווח" name="רווח גולמי" radius={[0,6,6,0]}>
+                        {salespersonData.map((_, i) => (
+                          <Cell key={i} fill="hsl(var(--primary))" />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[260px] flex flex-col items-center justify-center text-muted-foreground">
+                    <TrendingDown className="h-10 w-10 opacity-20 mb-2" />
+                    <p className="font-polin-light text-sm">אין נתוני מכירות עם שדה "איש מכירות"</p>
                   </div>
                 )}
               </div>
