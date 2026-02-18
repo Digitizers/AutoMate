@@ -11,6 +11,7 @@ const SLUG: Record<string, string> = {
   "טויוטה": "toyota",
   "הונדה": "honda",
   "מזדה": "mazda",
+  "מאזדה": "mazda",
   "יונדאי": "hyundai",
   "קיה": "kia",
   "ניסאן": "nissan",
@@ -20,6 +21,8 @@ const SLUG: Record<string, string> = {
   "מרצדס": "mercedes-benz",
   "מרצדס בנץ": "mercedes-benz",
   "ב.מ.וו": "bmw",
+  "בי.מ.וו": "bmw",
+  "ב מ ו": "bmw",
   "אאודי": "audi",
   "פולקסווגן": "volkswagen",
   "סקודה": "skoda",
@@ -130,7 +133,21 @@ const SLUG: Record<string, string> = {
 };
 
 function getSlug(manufacturer: string): string | null {
-  return SLUG[manufacturer.trim()] ?? SLUG[manufacturer.trim().toLowerCase()] ?? null;
+  const trimmed = manufacturer.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Exact match (Hebrew or English)
+  if (SLUG[trimmed]) return SLUG[trimmed];
+  if (SLUG[lower]) return SLUG[lower];
+
+  // Partial match — check if any key is contained in the manufacturer string
+  for (const [key, slug] of Object.entries(SLUG)) {
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return slug;
+    }
+  }
+
+  return null;
 }
 
 interface ManufacturerLogoProps {
