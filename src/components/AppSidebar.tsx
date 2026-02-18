@@ -1,5 +1,6 @@
-import { Car, BarChart3, Users, LogOut, ChevronLeft } from "lucide-react";
+import { Car, BarChart3, Users, LogOut, ChevronLeft, UserCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
 export function AppSidebar() {
   const { isAdmin, signOut, user } = useAuth();
   const { state } = useSidebar();
+  const navigate = useNavigate();
   const collapsed = state === "collapsed";
 
   const navItems = [
@@ -87,31 +89,50 @@ export function AppSidebar() {
       {/* Footer: user info + logout */}
       <SidebarFooter className="bg-sidebar border-t border-sidebar-border px-3 py-3">
         {!collapsed ? (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-sidebar-foreground font-polin-light text-xs truncate">{user?.email}</p>
-              <Badge className="mt-1 bg-sidebar-primary text-sidebar-primary-foreground font-polin-medium border-0 text-xs h-5">
-                {isAdmin ? "מנהל" : "איש מכירות"}
-              </Badge>
-            </div>
+          <div className="space-y-2">
+            <button
+              onClick={() => navigate("/profile")}
+              className="w-full flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-sidebar-accent transition-colors text-right"
+            >
+              <div className="w-7 h-7 rounded-full bg-gradient-gold flex items-center justify-center flex-shrink-0">
+                <UserCircle className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sidebar-foreground font-polin-light text-xs truncate">{user?.email}</p>
+                <Badge className="mt-0.5 bg-sidebar-primary text-sidebar-primary-foreground font-polin-medium border-0 text-xs h-5">
+                  {isAdmin ? "מנהל" : "איש מכירות"}
+                </Badge>
+              </div>
+            </button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent font-polin-light text-xs gap-2 justify-start"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              יציאה
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/profile")}
+              className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full h-8"
+            >
+              <UserCircle className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={signOut}
-              className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent flex-shrink-0 h-8 w-8"
+              className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full h-8"
             >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent w-full h-8"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
         )}
       </SidebarFooter>
     </Sidebar>

@@ -10,6 +10,7 @@ import Inventory from "./pages/Inventory";
 import VehicleDetail from "./pages/VehicleDetail";
 import Dashboard from "./pages/Dashboard";
 import UsersManagement from "./pages/UsersManagement";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/vehicle/:id" element={<ProtectedRoute><VehicleDetail /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><UsersManagement /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
