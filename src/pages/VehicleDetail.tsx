@@ -280,23 +280,41 @@ export default function VehicleDetail() {
               <Field label="מחיר קניה" name="purchase_price" type="number" />
               <Field label="הוצאות" name="expenses" type="number" />
             </div>
-            {/* Price summary bar */}
-            {(form.asking_price || form.purchase_price) && (
-              <div className="mt-5 grid grid-cols-3 gap-3">
-                {[
-                  { label: "מחיר מבוקש", val: form.asking_price, highlight: true },
-                  { label: "מחיר קניה", val: form.purchase_price, highlight: false },
-                  { label: "רווח גולמי", val: (form.asking_price ?? 0) - (form.purchase_price ?? 0) - (form.expenses ?? 0), highlight: false },
-                ].map(p => p.val != null && (
-                  <div key={p.label} className={`rounded-xl p-3 text-center ${p.highlight ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                    <p className={`text-xs font-polin-light mb-0.5 ${p.highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{p.label}</p>
-                    <p className={`text-base font-polin-medium ${p.highlight ? "text-accent" : "text-foreground"}`}>
-                      ₪{Number(p.val).toLocaleString()}
-                    </p>
+            {/* Price summary bar – always visible when any price field exists */}
+            {(form.asking_price != null || form.purchase_price != null) && (() => {
+              const asking = form.asking_price ?? 0;
+              const cost = (form.purchase_price ?? 0) + (form.expenses ?? 0) + (form.registration_fee ?? 0);
+              const gross = asking - cost;
+              const hasProfit = gross !== 0;
+              const isProfit = gross > 0;
+              return (
+                <div className="mt-5 space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-xl p-3 text-center bg-primary">
+                      <p className="text-xs font-polin-light mb-0.5 text-primary-foreground/70">מחיר מבוקש</p>
+                      <p className="text-base font-polin-medium text-accent">₪{Number(asking).toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-xl p-3 text-center bg-muted">
+                      <p className="text-xs font-polin-light mb-0.5 text-muted-foreground">עלות כוללת</p>
+                      <p className="text-base font-polin-medium text-foreground">₪{Number(cost).toLocaleString()}</p>
+                    </div>
+                    <div className={`rounded-xl p-3 text-center border-2 ${hasProfit ? (isProfit ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200") : "bg-muted border-transparent"}`}>
+                      <p className={`text-xs font-polin-light mb-0.5 ${hasProfit ? (isProfit ? "text-green-600" : "text-red-500") : "text-muted-foreground"}`}>רווח גולמי</p>
+                      <p className={`text-base font-polin-medium ${hasProfit ? (isProfit ? "text-green-700" : "text-red-600") : "text-foreground"}`}>
+                        {isProfit ? "+" : ""}₪{Number(gross).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  {cost > 0 && asking > 0 && (
+                    <div className="flex items-center gap-2 text-xs font-polin-light text-muted-foreground px-1">
+                      <span>עלות כוללת = מחיר קניה</span>
+                      {form.expenses ? <span>+ הוצאות (₪{Number(form.expenses).toLocaleString()})</span> : null}
+                      {form.registration_fee ? <span>+ אגרת רישוי (₪{Number(form.registration_fee).toLocaleString()})</span> : null}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </Section>
 
           {/* ── Additional ── */}
