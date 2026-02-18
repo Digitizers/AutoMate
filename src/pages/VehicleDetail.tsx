@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car } from "lucide-react";
+import { ArrowRight, Save, Upload, Images, ClipboardCheck, ExternalLink, Trash2, Car, FileText, Wrench, Banknote, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import VehicleGallery from "@/components/VehicleGallery";
@@ -195,7 +195,7 @@ export default function VehicleDetail() {
         <div className="mx-auto max-w-5xl px-4 md:px-6 py-8 space-y-6 animate-fade-in">
 
           {/* ── Identification ── */}
-          <Section title="פרטי זיהוי" icon={Car}>
+          <Section title="פרטי זיהוי" icon={FileText}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="מספר רישוי" name="license_plate" />
               <Field label="מספר שלדה" name="chassis_number" />
@@ -223,7 +223,7 @@ export default function VehicleDetail() {
           </Section>
 
           {/* ── Condition ── */}
-          <Section title="מצב הרכב" icon={Car}>
+          <Section title="מצב הרכב" icon={Wrench}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="יד" name="hand" type="number" />
               <Field label='מד אוץ (ק"מ)' name="odometer" type="number" />
@@ -250,7 +250,7 @@ export default function VehicleDetail() {
           </Section>
 
           {/* ── Deal ── */}
-          <Section title="פרטי עסקה" icon={Save}>
+          <Section title="פרטי עסקה" icon={Banknote}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <div className="space-y-1.5">
                 <Label className="text-xs font-polin-medium text-muted-foreground uppercase tracking-wide">סוג עסקה</Label>
@@ -300,7 +300,7 @@ export default function VehicleDetail() {
           </Section>
 
           {/* ── Additional ── */}
-          <Section title="מידע נוסף" icon={Car}>
+          <Section title="מידע נוסף" icon={Info}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <Field label="סניף" name="branch" />
               <Field label="תאריך כניסה למלאי" name="entry_date" type="date" />
@@ -473,18 +473,18 @@ export default function VehicleDetail() {
           )}
 
           {/* bottom padding for sticky bar */}
-          <div className="h-4" />
+          <div className="h-24" />
         </div>
 
         {/* ── Sticky Save Bar ── */}
         {isAdmin && (
-          <div className="fixed bottom-0 inset-x-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-elevated">
-            <div className="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between">
+          <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-elevated">
+            <div className="px-6 py-3 flex items-center justify-between max-w-5xl mx-auto">
               <p className="text-xs font-polin-light text-muted-foreground">
                 {isNew ? "מלא את הפרטים ולחץ שמירה להוספת הרכב" : "שנה פרטים ולחץ שמירה לעדכון"}
               </p>
               <Button type="submit" disabled={saveMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-polin-medium gap-2 px-6">
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-polin-medium gap-2 px-6 shadow-card">
                 <Save className="h-4 w-4" />
                 {saveMutation.isPending ? "שומר..." : isNew ? "הוסף רכב" : "שמור שינויים"}
               </Button>
