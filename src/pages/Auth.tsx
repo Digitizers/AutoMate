@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import logoImg from "@/assets/logo.png";
 
 export default function Auth() {
@@ -16,6 +17,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +45,7 @@ export default function Auth() {
     if (error) {
       toast({ title: "שגיאה", description: error.message, variant: "destructive" });
     } else if (isSignUp) {
-      toast({ title: "נרשמת בהצלחה!", description: "בדוק את האימייל לאישור החשבון." });
+      navigate("/email-confirmation");
     }
   };
 
