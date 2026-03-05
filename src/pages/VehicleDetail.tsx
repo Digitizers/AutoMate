@@ -366,12 +366,12 @@ export default function VehicleDetail() {
               {renderField("מחיר מחירון דגם", "list_price", "number")}
               {renderField("מחירון משוקלל", "weighted_list_price", "number")}
               {renderField("מחיר מבוקש", "asking_price", "number")}
-              {renderField("מחיר קניה", "purchase_price", "number")}
+              {isAdmin && renderField("מחיר קניה", "purchase_price", "number")}
             </div>
             {/* Price summary bar – always visible when any price field exists */}
-            {(form.asking_price != null || form.purchase_price != null) && (() => {
+            {isAdmin && (form.asking_price != null || form.purchase_price != null) && (() => {
               const asking = form.asking_price ?? 0;
-              const cost = (form.purchase_price ?? 0) + totalExpenses + (form.registration_fee ?? 0);
+              const cost = (form.purchase_price ?? 0) + totalExpenses;
               const gross = asking - cost;
               const hasProfit = gross !== 0;
               const isProfit = gross > 0;
@@ -397,7 +397,6 @@ export default function VehicleDetail() {
                     <div className="flex items-center gap-2 text-xs font-polin-light text-muted-foreground px-1">
                       <span>עלות כוללת = מחיר קניה</span>
                       {totalExpenses > 0 ? <span>+ הוצאות (₪{totalExpenses.toLocaleString()})</span> : null}
-                      {form.registration_fee ? <span>+ אגרת רישוי (₪{Number(form.registration_fee).toLocaleString()})</span> : null}
                     </div>
                   )}
                 </div>
