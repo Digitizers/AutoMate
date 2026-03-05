@@ -139,7 +139,7 @@ export default function VehiclePrintView({ vehicle, agentName }: VehiclePrintVie
 
   const asking = vehicle.asking_price ?? 0;
   const expenses = 0; // loaded separately; passed via props if needed
-  const cost = (vehicle.purchase_price ?? 0) + (vehicle.registration_fee ?? 0);
+  const cost = (vehicle.purchase_price ?? 0);
   const gross = asking - cost;
 
   const printDate = new Date().toLocaleDateString("he-IL", { year: "numeric", month: "long", day: "numeric" });

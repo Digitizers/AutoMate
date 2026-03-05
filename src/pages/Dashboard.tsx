@@ -111,7 +111,7 @@ export default function Dashboard() {
   // ── Gross Profit helpers ──────────────────────────────────────────────
   const calcProfit = (v: typeof vehicles[0]) => {
     const revenue = v.asking_price ?? 0;
-    const cost    = (v.purchase_price ?? 0) + (v.expenses ?? 0) + (v.registration_fee ?? 0);
+    const cost    = (v.purchase_price ?? 0) + (v.expenses ?? 0);
     return revenue - cost;
   };
 
