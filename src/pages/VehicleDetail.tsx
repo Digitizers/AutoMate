@@ -157,8 +157,12 @@ export default function VehicleDetail() {
       setNewExpense({ expense_date: "", amount: "", description: "" });
       setAddingExpense(false);
       refetchExpenses();
+      toast({ title: "הוצאה נשמרה בהצלחה" });
     },
-    onError: (err: Error) => toast({ title: "שגיאה", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => {
+      console.error("Expense save error:", err);
+      toast({ title: "שגיאה בשמירת הוצאה", description: err.message, variant: "destructive" });
+    },
   });
 
   const deleteExpenseMutation = useMutation({
