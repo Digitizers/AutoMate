@@ -144,13 +144,13 @@ export default function VehicleDetail() {
 
   const addExpenseMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("vehicle_expenses" as any).insert({
+      const { error } = await supabase.from("vehicle_expenses").insert({
         vehicle_id: vehicleId,
         expense_date: newExpense.expense_date || new Date().toISOString().slice(0, 10),
         amount: Number(newExpense.amount) || 0,
         description: newExpense.description,
         created_by: user?.id,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
