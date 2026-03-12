@@ -163,7 +163,7 @@ export default function VehicleDetail() {
 
   const deleteExpenseMutation = useMutation({
     mutationFn: async (expenseId: string) => {
-      const { error } = await supabase.from("vehicle_expenses" as any).delete().eq("id", expenseId);
+      const { error } = await supabase.from("vehicle_expenses").delete().eq("id", expenseId);
       if (error) throw error;
     },
     onSuccess: () => refetchExpenses(),
