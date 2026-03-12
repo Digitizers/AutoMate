@@ -130,12 +130,12 @@ export default function VehicleDetail() {
     queryFn: async () => {
       if (isNew) return [];
       const { data, error } = await supabase
-        .from("vehicle_expenses" as any)
+        .from("vehicle_expenses")
         .select("*")
         .eq("vehicle_id", vehicleId)
         .order("expense_date", { ascending: false });
       if (error) throw error;
-      return (data as unknown) as { id: string; expense_date: string; amount: number; description: string }[];
+      return data as { id: string; expense_date: string; amount: number; description: string }[];
     },
     enabled: !isNew,
   });
@@ -144,26 +144,30 @@ export default function VehicleDetail() {
 
   const addExpenseMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("vehicle_expenses" as any).insert({
+      const { error } = await supabase.from("vehicle_expenses").insert({
         vehicle_id: vehicleId,
         expense_date: newExpense.expense_date || new Date().toISOString().slice(0, 10),
         amount: Number(newExpense.amount) || 0,
         description: newExpense.description,
         created_by: user?.id,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       setNewExpense({ expense_date: "", amount: "", description: "" });
       setAddingExpense(false);
       refetchExpenses();
+      toast({ title: "הוצאה נשמרה בהצלחה" });
     },
-    onError: (err: Error) => toast({ title: "שגיאה", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => {
+      console.error("Expense save error:", err);
+      toast({ title: "שגיאה בשמירת הוצאה", description: err.message, variant: "destructive" });
+    },
   });
 
   const deleteExpenseMutation = useMutation({
     mutationFn: async (expenseId: string) => {
-      const { error } = await supabase.from("vehicle_expenses" as any).delete().eq("id", expenseId);
+      const { error } = await supabase.from("vehicle_expenses").delete().eq("id", expenseId);
       if (error) throw error;
     },
     onSuccess: () => refetchExpenses(),
